@@ -777,7 +777,7 @@ impl UdevMonitor {
             smsg.msg_iov = &mut iov as *mut libc::iovec as *mut _;
             smsg.msg_iovlen = 1;
             smsg.msg_control = cred_msg.as_mut_ptr() as *mut _;
-            smsg.msg_controllen = cred_msg.len();
+            smsg.msg_controllen = cred_msg.len() as _;
             smsg.msg_name = &mut snl as *mut libc::sockaddr_nl as *mut _;
             smsg.msg_namelen = mem::size_of::<libc::sockaddr_nl>() as u32;
 
@@ -925,15 +925,10 @@ impl UdevMonitor {
             },
         ];
 
-        let mut smsg = libc::msghdr {
-            msg_iov: iov.as_mut_ptr() as *mut _,
-            msg_iovlen: iov.len(),
-            msg_control: core::ptr::null_mut(),
-            msg_controllen: 0,
-            msg_flags: 0,
-            msg_name: core::ptr::null_mut(),
-            msg_namelen: 0,
-        };
+        let mut smsg: libc::msghdr = unsafe { mem::zeroed() };
+
+        smsg.msg_iov = iov.as_mut_ptr() as *mut _;
+        smsg.msg_iovlen = iov.len() as _;
 
         if device.get_properties_monitor_buf().len() < 32 {
             Err(Error::UdevMonitor(
